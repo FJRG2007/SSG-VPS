@@ -23,6 +23,7 @@
   "homepage": "https://github.com/FJRG2007/SSG-VPS#readme",
   "dependencies": {
     "express": "^4.19.2",
+    "jsdom": "^24.0.0",
     "path": "^0.12.7"
   }
 }
