@@ -1,6 +1,6 @@
 /*
 
-Updates: ttps://github.com/FJRG2007/SSG-VPS/blob/main/astro/server/app.js
+Updates: https://github.com/FJRG2007/SSG-VPS/blob/main/astro/server/app.js
 
 Functionalities ->
  - Route control.
