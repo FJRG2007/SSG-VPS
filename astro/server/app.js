@@ -1,3 +1,14 @@
+/*
+
+Updates: ttps://github.com/FJRG2007/SSG-VPS/blob/main/astro/server/app.js
+
+Functionalities ->
+ - Route control.
+ - Faster redirections.
+ - Error handling.
+
+*/
+
 import fs from "fs";
 import { JSDOM } from "jsdom";
 import express from "express";
