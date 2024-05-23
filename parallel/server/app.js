@@ -1,8 +1,9 @@
 /*
 
-Updates: https://github.com/FJRG2007/SSG-VPS/blob/main/astro/server/app.js
+Updates: https://github.com/FJRG2007/SSG-VPS/blob/main/parallel/server/app.js
 
 Functionalities ->
+ - Clean Urls.
  - Route control.
  - Faster redirections.
  - Error handling.
@@ -75,8 +76,7 @@ app.use((req, res, next) => {
     } else {
         reqPath = `${req.path}/*`;
     }
-    const redirectUrl = redirectMap[reqPath];
-    if (redirectUrl) return res.redirect(redirectUrl);
+    if (redirectMap[reqPath]) return res.redirect(redirectMap[reqPath]);
     return next();
 });
 
@@ -102,7 +102,6 @@ app.get("*", (req, res) => {
                 if (!err && stats.isFile()) return res.sendFile(indexPath);
                 // If there is no "index.html", return 404 error.
                 return res.status(404).sendFile(path.join(__dirname, "..", "dist", "404.html"));
-
             });
         });
     });

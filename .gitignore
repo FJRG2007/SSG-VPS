@@ -2,4 +2,8 @@
 node_modules/
 
 # build output
+<<<<<<< HEAD
 server/redirects.json
+=======
+server/redirects.json
+>>>>>>> b97590f06c0857599110d1f47652957f7f2766d3
