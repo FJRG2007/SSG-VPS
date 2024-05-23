@@ -1,3 +1,14 @@
+/*
+
+Updates: https://github.com/FJRG2007/SSG-VPS/blob/main/astro/server/app.js
+
+Functionalities ->
+ - Route control.
+ - Faster redirections.
+ - Error handling.
+
+*/
+
 import fs from "fs";
 import { JSDOM } from "jsdom";
 import express from "express";
@@ -42,7 +53,10 @@ const scanHtmlFiles = (dirPath, excludeDirs) => {
 
 // Generate JSON file with redirects.
 const generateRedirectsFile = () => {
-    const excludeDirs = ["pagefind", "_astro"];
+    const excludeDirs = [
+        "pagefind", // Don't remove it here if you use Starlight.
+        "_astro" // Don't remove it here if you use Astro.
+    ];
     const redirects = scanHtmlFiles(directoryPath, excludeDirs);
     fs.writeFileSync(outputFilePath, JSON.stringify(redirects, null, 2));
     console.log(`Generated redirection file: ${outputFilePath}`);
