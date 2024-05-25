@@ -33,11 +33,19 @@ const getTech = () => {
             adapter.routes = ["_astro"];
             console.log("\x1b[32m%s\x1b[0m", "[SERVER] All ready for you.");
             break;
+        case "--native":
+            adapter.routes = ["assets", "public"];
+            console.log("\x1b[32m%s\x1b[0m", "[SERVER] All ready for you.");
+            break;
         case "--starlight":
             adapter.routes = ["_astro", "pagefind"];
             console.log("\x1b[32m%s\x1b[0m", "[SERVER] All ready for you.");
             break;
         case "--vite":
+            adapter.routes = ["assets"];
+            console.log("\x1b[34m%s\x1b[0m", "[SERVER] Remember to set the property 'cleanUrls: true' in your Vite configuration file.");
+            break;
+        case "--vitepress":
             adapter.routes = ["assets"];
             console.log("\x1b[34m%s\x1b[0m", "[SERVER] Remember to set the property 'cleanUrls: true' in your Vite configuration file.");
             break;

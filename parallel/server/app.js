@@ -1,6 +1,6 @@
 /*
 
-Updates: https://github.com/FJRG2007/SSG-VPS/blob/main/parallel/server/app.es5.js
+Updates: https://github.com/FJRG2007/SSG-VPS/blob/main/parallel/server/app.js
 
 Functionalities ->
  - Clean Urls.
@@ -10,46 +10,31 @@ Functionalities ->
 
 */
 
+import fs from "fs";
+import { JSDOM } from "jsdom";
+import express from "express";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
+
+
+/*
 const fs = require("fs");
 const { JSDOM } = require("jsdom");
 const express = require("express");
 const path = require("path");
+const { dirname } = path;
+const { fileURLToPath } = require("url");
+
+*/
+
+const __filename = __filename ?? fileURLToPath(import.meta.url);
+const __dirname = __dirname ?? dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 const directoryPath = path.join(__dirname, "..", "dist"); // Directory containing HTML files.
 const outputFilePath = path.join(__dirname, "redirects.json");
-
-let adapter = {};
-
-const getTech = () => {
-    switch (process.argv[2]) {
-        case "--astro":
-            adapter.routes = ["_astro"];
-            console.log("\x1b[32m%s\x1b[0m", "[SERVER] All ready for you.");
-            break;
-        case "--native":
-            adapter.routes = ["assets", "public"];
-            console.log("\x1b[32m%s\x1b[0m", "[SERVER] All ready for you.");
-            break;
-        case "--starlight":
-            adapter.routes = ["_astro", "pagefind"];
-            console.log("\x1b[32m%s\x1b[0m", "[SERVER] All ready for you.");
-            break;
-        case "--vite":
-            adapter.routes = ["assets"];
-            console.log("\x1b[34m%s\x1b[0m", "[SERVER] Remember to set the property 'cleanUrls: true' in your Vite configuration file.");
-            break;
-        case "--vitepress":
-            adapter.routes = ["assets"];
-            console.log("\x1b[34m%s\x1b[0m", "[SERVER] Remember to set the property 'cleanUrls: true' in your Vite configuration file.");
-            break;
-        default:
-            console.log("\x1b[31m%s\x1b[0m", "[SERVER] You have not specified any technology, the server may not work as expected.");
-            break;
-    }
-};
 
 // Function for scanning HTML files in a directory, excluding certain folders.
 const scanHtmlFiles = (dirPath, excludeDirs) => {
@@ -80,7 +65,12 @@ const scanHtmlFiles = (dirPath, excludeDirs) => {
 
 // Generate JSON file with redirects.
 const generateRedirectsFile = () => {
-    fs.writeFileSync(outputFilePath, JSON.stringify(scanHtmlFiles(directoryPath, adapter.routes), null, 2));
+    const excludeDirs = [
+        "pagefind", // Don't remove it here if you use Starlight.
+        "_astro" // Don't remove it here if you use Astro.
+    ];
+    const redirects = scanHtmlFiles(directoryPath, excludeDirs);
+    fs.writeFileSync(outputFilePath, JSON.stringify(redirects, null, 2));
     console.log(`Generated redirection file: ${outputFilePath}`);
 };
 
@@ -103,7 +93,7 @@ app.use((req, res, next) => {
 
 app.get("*", (req, res) => {
     const urlPath = req.url.split("?")[0];
-    if (adapter.routes.some(r => urlPath.startsWith(r))) return res.sendFile(path.join(__dirname, "..", "dist", urlPath));
+    if (urlPath.startsWith("/_astro") || urlPath.startsWith("/pagefind")) return res.sendFile(path.join(__dirname, "..", "dist", urlPath));
     // Check if the request URL ends with "index.html".
     if (urlPath.endsWith("index.html")) return res.redirect(urlPath.slice(0, -10));
     // Check if the request URL ends with ".html".
@@ -116,7 +106,7 @@ app.get("*", (req, res) => {
         // Verify if the requested path is a directory.
         fs.stat(filePath, (err, stats) => {
             // If there is no "index.html", return 404 error.
-            if (err || !stats.isDirectory()) return res.status(404).sendFile(path.join(__dirname, "..", "dist", `${urlPath}.html`));
+            if (err || !stats.isDirectory()) return res.status(404).sendFile(path.join(__dirname, "..", "dist", "404.html"));
             // If it is a directory, check if there is an "index.html" file inside.
             const indexPath = path.join(filePath, "index.html");
             fs.stat(indexPath, (err, stats) => {
@@ -133,7 +123,6 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-    getTech();
     generateRedirectsFile();
-    console.log("\x1b[1m%s\x1b[0m", `[SERVER] Server started on port http://localhost:${PORT}/`);
+    console.log(`Server started on port http://localhost:${PORT}/`);
 });
