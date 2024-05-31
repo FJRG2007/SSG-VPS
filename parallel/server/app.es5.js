@@ -18,34 +18,41 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const directoryPath = path.join(__dirname, "..", "dist"); // Directory containing HTML files.
 const outputFilePath = path.join(__dirname, "redirects.json");
-
-let adapter = {};
+var adapter = {
+    contentDir: [__dirname, ".."]
+};
 
 const getTech = () => {
     switch (process.argv[2]) {
         case "--astro":
             adapter.routes = ["_astro"];
+            adapter.contentDir.push("dist");
             console.log("\x1b[32m%s\x1b[0m", "[SERVER] All ready for you.");
             break;
         case "--native":
             adapter.routes = ["assets", "public"];
+            adapter.contentDir.push("dist");
             console.log("\x1b[32m%s\x1b[0m", "[SERVER] All ready for you.");
             break;
         case "--starlight":
             adapter.routes = ["_astro", "pagefind"];
+            adapter.contentDir.push("dist");
             console.log("\x1b[32m%s\x1b[0m", "[SERVER] All ready for you.");
             break;
         case "--vite":
             adapter.routes = ["assets"];
+            adapter.contentDir.push("dist");
             console.log("\x1b[34m%s\x1b[0m", "[SERVER] Remember to set the property 'cleanUrls: true' in your Vite configuration file.");
             break;
         case "--vitepress":
             adapter.routes = ["assets"];
+            adapter.contentDir.push(".vitepress", "dist");
             console.log("\x1b[34m%s\x1b[0m", "[SERVER] Remember to set the property 'cleanUrls: true' in your Vite configuration file.");
             break;
         default:
+            adapter.routes = ["assets", "public"];
+            adapter.contentDir.push("dist");
             console.log("\x1b[31m%s\x1b[0m", "[SERVER] You have not specified any technology, the server may not work as expected.");
             break;
     }
@@ -65,7 +72,7 @@ const scanHtmlFiles = (dirPath, excludeDirs) => {
             if (metaRefresh) {
                 const match = metaRefresh.getAttribute("content").match(/^0;url=(.*)$/);
                 if (match) {
-                    let relativePath = path.relative(directoryPath, filePath).replace(/\\/g, "/");
+                    let relativePath = path.relative(...adapter.contentDir, filePath).replace(/\\/g, "/");
                     // If the path ends in index.html, replace it with * to handle redirects without index.html.
                     if (relativePath.endsWith("index.html")) relativePath = `${relativePath.slice(0, -10)}*`;
                     // If the path contains .html, replace it with * to handle redirects without .html.
@@ -80,7 +87,7 @@ const scanHtmlFiles = (dirPath, excludeDirs) => {
 
 // Generate JSON file with redirects.
 const generateRedirectsFile = () => {
-    fs.writeFileSync(outputFilePath, JSON.stringify(scanHtmlFiles(directoryPath, adapter.routes), null, 2));
+    fs.writeFileSync(outputFilePath, JSON.stringify(scanHtmlFiles(...adapter.contentDir, adapter.routes), null, 2));
     console.log(`Generated redirection file: ${outputFilePath}`);
 };
 
@@ -103,33 +110,33 @@ app.use((req, res, next) => {
 
 app.get("*", (req, res) => {
     const urlPath = req.url.split("?")[0];
-    if (adapter.routes.some(r => urlPath.startsWith(r))) return res.sendFile(path.join(__dirname, "..", "dist", urlPath));
+    if (adapter.routes.some(r => urlPath.startsWith(r))) return res.sendFile(path.join(...adapter.contentDir, urlPath));
     // Check if the request URL ends with "index.html".
     if (urlPath.endsWith("index.html")) return res.redirect(urlPath.slice(0, -10));
     // Check if the request URL ends with ".html".
     if (urlPath.endsWith(".html")) return res.redirect(urlPath.slice(0, -5));
     // Check if the requested path exists as a file or directory.
-    const filePath = path.join(__dirname, "..", "dist", urlPath);
+    const filePath = path.join(...adapter.contentDir, urlPath);
     // Verify if the requested path is a file.
     fs.stat(filePath, (err, stats) => {
         if (!err && stats.isFile()) return res.sendFile(filePath);
         // Verify if the requested path is a directory.
         fs.stat(filePath, (err, stats) => {
             // If there is no "index.html", return 404 error.
-            if (err || !stats.isDirectory()) return res.status(404).sendFile(path.join(__dirname, "..", "dist", `${urlPath}.html`));
+            if (err || !stats.isDirectory()) return res.status(404).sendFile(path.join(...adapter.contentDir, `${urlPath}.html`));
             // If it is a directory, check if there is an "index.html" file inside.
             const indexPath = path.join(filePath, "index.html");
             fs.stat(indexPath, (err, stats) => {
                 if (!err && stats.isFile()) return res.sendFile(indexPath);
                 // If there is no "index.html", return 404 error.
-                return res.status(404).sendFile(path.join(__dirname, "..", "dist", "404.html"));
+                return res.status(404).sendFile(path.join(...adapter.contentDir, "404.html"));
             });
         });
     });
 });
 
 app.use((err, req, res, next) => {
-    return res.status(404).sendFile(path.join(__dirname, "..", "dist", "404.html"));
+    return res.status(404).sendFile(path.join(...adapter.contentDir, "404.html"));
 });
 
 app.listen(PORT, () => {
